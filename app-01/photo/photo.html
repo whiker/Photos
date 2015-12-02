@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>photos</title>
+<style>
+body { background:#d0d0d0; }
+.btn { outline:none; width:85px; height:32px; border:0px; border-radius:6px;
+	cursor:pointer; font-size:21px; color:#fff; position:absolute; left:50%; top:6%; }
+#exit_btn { background:#555; margin-left:-350px; }
+#crea_btn { background:#0a0; margin-left: -40px; }
+#back_btn { background:#555; margin-left:-350px; }
+#dele_btn { background:#f33; margin-left: 270px; }
+#load_btn { background:#0a0; margin-left: -40px; }
+#main_div { position:absolute; left:50%; top:5%; margin-top:60px; }
+#new_name {	width:674px; height:22px; outline:none; padding:4px 16px;
+	border-radius:26px; background:#eee; color:#333; font-size:18px;
+	box-shadow:#aaa 0 0 2px; border:0; margin:20px 0 0 -350px; }
+ul { width:700px; padding:0; list-style:none; font-size:25px; color:#555;
+	overflow-x:visible; overflow-y:auto; text-align:center; margin-left:-350px; }
+li { margin-bottom:25px; cursor:pointer; border-bottom:1px #c80 dashed; }
+li:hover { color:#08c; }
+#myimg { max-width:800px; margin-left:-400px; margin-top:0px; }
+.share { position:absolute; left:350px; top:15px; cursor:pointer; }
+</style>
+</head>
+<body>
+<button id='crea_btn' onclick='crea()' class='btn'>新图集</button>
+<button id='back_btn' onclick='back()' class='btn'>返回</button>
+<button id='dele_btn' onclick='dele()' class='btn'>删除</button>
+<button id='load_btn' onclick='select.click()' class='btn'>上传</button>
+<div id='main_div'>
+<input id='new_name' type='text' maxlength='30' placeholder='图集名称'>
+<ul id='list'></ul>
+<img id='myimg' onclick='next()'></img>
+<img id='share1' onclick='share(0)' src='photo/1.ico' class='share'></img>
+<img id='share0' onclick='share(1)' src='photo/0.ico' class='share'></img>
+</div>
+<input id='select' type='file' onchange='onSelect()' style='display:none'>
+</form>
+<script>
+// ------------------------------------------------------------------
+var crea_btn = document.getElementById("crea_btn");
+var back_btn = document.getElementById("back_btn");
+var load_btn = document.getElementById("load_btn");
+var dele_btn = document.getElementById("dele_btn");
+var new_name = document.getElementById("new_name");
+var list     = document.getElementById("list");
+var myimg    = document.getElementById("myimg");
+var share0   = document.getElementById("share0");
+var share1   = document.getElementById("share1");
+var select   = document.getElementById("select");
+
+var img_id  = -1;
+var img_num = -1;
+var img_set = "";
+var disp_text = new Array("", "none");
+var crea_text = new Array("创建", "新图集");
+
+var share_imgset = "";
+
+var crea_flag = 0;
+new_name.style.display = "none";
+set_page("list");
+
+// ------------------------------------------------------------------
+window.onload = load_page;
+function load_page() {
+	var ajax = new XMLHttpRequest();
+	ajax.onload = function() {
+		if (ajax.readyState==4 && ajax.status==200)
+			init_list(ajax.responseText);
+	}
+	ajax.open('GET', 'photo/list', true);
+	ajax.send();
+}
+
+function init_list(str) {
+	var items = str.split("\n", 1000);
+	list.innerHTML = "";
+	for (var i = 0; i < items.length; ++i)
+		list.innerHTML += "<li onclick='li_click(this)'>"
+			+ items[i] + "</li>";
+}
+
+function li_click(e) {
+	img_set = e.innerHTML;
+	var ajax = new XMLHttpRequest();
+	ajax.onload = function() {
+		if (ajax.readyState==4 && ajax.status==200) {
+			var strs = ajax.responseText.split("\n", 10);
+			img_num = parseInt(strs[0]);
+			share_imgset = strs[1];
+			myimg.src = ""; next();
+			set_page("pict");
+		} else alert("打不开~  " + img_set);
+	}
+	ajax.open('GET', 'photo/open/'+img_set, true);
+	ajax.send();
+}
+
+// 创建 -------------------------------------------------------------
+function crea() {
+	if (crea_flag == 0) crea0(0);
+	else crea1();
+}
+
+function crea0(c) {
+	crea_btn.innerHTML = crea_text[c];
+	new_name.value = "";
+	new_name.style.display = disp_text[c];
+	crea_flag = 1-c;
+}
+
+function crea1() {
+	if (new_name.value.length > 0) {
+		var ajax = new XMLHttpRequest();
+		ajax.onload = function() {
+			if (ajax.readyState==4 && ajax.status==200) {
+				crea0(1); load_page();
+			} else alert("没创建好~");
+		}
+		ajax.open('GET', 'photo/create/' + new_name.value, true);
+		ajax.send();
+	} else crea0(1);
+}
+
+// ------------------------------------------------------------------
+// 返回
+function back() {
+	img_num = img_id = -1;
+	set_page("list");
+}
+
+// 下一张
+function next() {
+	if (img_num <= 0) return;
+	var t = (img_id + 1) % img_num;
+	if (t == img_id) return;
+	img_id = t;
+	showImg(true);
+}
+
+function showImg(isCheck) {
+	myimg.src = "photo/imgs/"+img_set+"/"+img_id+".jpg";
+	setShareImg(0);
+	if (isCheck && img_set == share_imgset) {
+		var ajax = new XMLHttpRequest();
+		ajax.onload = function() {
+			var ret = 0;
+			if (ajax.readyState==4 && ajax.status==200)
+				setShareImg(1);
+		}
+		ajax.open("GET", "photo/isshare/"+img_id, true);
+		ajax.send();
+	}
+}
+
+function setShareImg(c) {
+	share0.style.display = disp_text[c];
+	share1.style.display = disp_text[1-c];
+}
+
+// 删除
+function dele() {
+	var ajax = new XMLHttpRequest();
+	ajax.onload = function() {
+		if (ajax.readyState==4 && ajax.status==200) {
+			alert("删啦");
+			--img_num;
+			if (img_num > 0) {
+				if (img_id > 0) --img_id;
+				showImg(true);
+			}
+			else {
+				myimg.src = "";
+				img_id = -1;
+				share0.style.display = disp_text[0];
+				share1.style.display = disp_text[1];
+			}
+		}
+		else
+			alert("没删~");
+	}
+	ajax.open("GET", "photo/delete/"+img_set+"/"+img_id, true);
+	ajax.send();
+}
+
+// 分享
+function share(c) {  // c: 0-取消 1-分享
+	if (img_num <= 0) return;
+	var ajax = new XMLHttpRequest();
+	ajax.onload = function() {
+		if (ajax.readyState==4 && ajax.status==200) {
+			share0.style.display = disp_text[c];
+			share1.style.display = disp_text[1-c];
+			share_imgset = img_set;
+			alert("好啦");
+		}
+		else
+			alert("没设好~");
+	}
+	if (c == 1)
+		ajax.open("GET",   "photo/share/"+img_set+"/"+img_id, true);
+	else
+		ajax.open("GET", "photo/unshare/"+img_set+"/"+img_id, true);
+	ajax.send();
+}
+
+// 上传 -------------------------------------------------------------
+function onSelect() {
+	var file = select.files[0];
+	if (file.size <= 0) return;
+	var form = new FormData();
+	form.append("file", file);
+
+	var ajax = new XMLHttpRequest();
+	ajax.upload.addEventListener("load", onUploadComplete, false);
+	ajax.upload.addEventListener("error", onUploadFail, false);
+	ajax.open("POST", "photo/upload/"+img_set);
+	ajax.send(form);
+	myimg.style.display = "none";
+}
+
+function onUploadComplete() {
+	select.value = "";
+	myimg.style.display = "";
+	if (img_num > 0) {
+		img_id = img_num;
+		++img_num;
+	}
+	else {
+		img_num = 1;
+		img_id = 0;
+	}
+	showImg(false);
+}
+
+function onUploadFail() {
+	select.value = "";
+	myimg.style.display = "";
+	alert("上传失败");
+}
+
+// 切换页面 ---------------------------------------------------------
+function set_page(page) {
+	var c = page=="list" ? 0 : 1;
+	var a = disp_text[c];
+	var b = disp_text[1-c];
+	crea_btn.style.display = a;
+	list.style.display     = a;
+	back_btn.style.display = b;
+	load_btn.style.display = b;
+	dele_btn.style.display = b;
+	myimg.style.display    = b;
+	share0.style.display   = b;
+	share1.style.display   = b;
+}
+</script>
+</body>
+</html>

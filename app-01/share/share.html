@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>photos</title>
+<style>
+#myimg {
+	position:absolute; left:50%; top:15px;
+	margin-left: -400px;
+	max-width:800px; min-width:800px;
+}
+</style>
+</head>
+<body style='background:#333'>
+<img id='myimg' src='share/0' onclick='next()'></img>
+<script>
+imgId = 0;
+function next() {
+	++imgId;
+	myimg.src = "share/" + imgId;
+}
+</script>
+</body>
+</html>

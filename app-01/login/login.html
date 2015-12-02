@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>photos</title>
+<style>
+.back_div > img { position:fixed; top:0; bottom:0; left:0; right:0;
+	z-index:-5; border:0; width:100%; height:100%; }
+.main_div { width:512px; height:132px; position:absolute; left:50%;
+	top:54%; font-size:16px; margin:-50px 0 0 -256px; }
+#logo { width:100px; margin:-190px 0 0 -50px;
+	position:absolute; left:50%; top:54%; }
+input {	margin-left:110px; width:248px; height:22px; outline:none;
+	border-radius:26px; margin-top:20px; padding:5px 22px;
+	background:rgba(255,255,255,0.8); color:#333; font-size:20px;
+	font-family:'Ubuntu Mono','Consolas';
+	box-shadow:#aaa 0 0 2px; border:0; }
+#id_submit { outline:none; width:32px; height:32px;
+	border:0; border-radius:32px; background:#08c;
+	font-weight:bold; font-size:18px; color:#fff;
+	position:absolute; left:370px; top:72px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class='back_div'><img src='login/0.jpg'></img></div>
+<div class='main_div'>
+	<input id='id_name' type='text' maxlength='8' placeholder='用户名'>
+	<input id='id_password' type='password' maxlength='8' placeholder='密码'>
+	<button id='id_submit' type='submit' onclick='submit()'>></button>
+</div>
+<img id='logo' src='login/1.png'></img>
+<script>
+function submit() {
+	if (id_name.value.length==0 || id_password.value.length==0) {
+		alert("请填写用户名和密码");
+		return;
+	}
+	var ajax = new XMLHttpRequest();
+	ajax.onload = function() {
+		if (ajax.readyState==4 && ajax.status==200)
+			window.location.href = "photo";
+		else
+			alert("用户名或密码错误");
+	}
+	ajax.open("GET", "login?"+id_name.value+"=" + id_password.value, true);
+	ajax.send();
+}
+</script>
+</body>
+</html>
